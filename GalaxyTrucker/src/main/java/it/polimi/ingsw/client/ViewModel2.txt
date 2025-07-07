@@ -1,0 +1,279 @@
+package it.polimi.ingsw.client;
+
+import it.polimi.ingsw.commands.serverResponse.GameState;
+import it.polimi.ingsw.commands.serverResponse.GameStateType;
+import it.polimi.ingsw.controller.GameController;
+import it.polimi.ingsw.enums.GamePhase;
+import it.polimi.ingsw.enums.GameProgression;
+import it.polimi.ingsw.model.game.FlightBoardFacade;
+import it.polimi.ingsw.model.playerset.Player;
+import it.polimi.ingsw.model.playerset.PlayerColor;
+import it.polimi.ingsw.model.playerset.RocketshipBoard;
+
+import java.util.*;
+import java.util.Observable;
+
+
+
+// hp: vi si dovrebbero iscrivere come osservatori ClientController e View
+public class ViewModel2 extends Observable {
+
+
+    class FSM {
+
+        private ClientState clientState; // [] da creare
+        /* apertura del gioco, ask server info, seleziona/crea partita, in attesa, in partita */
+
+        private GameProgression gameProgression;
+        private GamePhase gamePhase;
+
+        private PlayerColor playerToVisualize; // can be null during adventure phase
+
+        private AdventureCardType currentAdventureCard;
+        // [ ] aggiungere enum per carte avventura
+
+
+        public FMS() {
+            this.clientState = ClientState.SELECT_SERVER;
+
+            this.gameProgression = null;
+            this.gamePhase = null;
+
+            this.playerToVisualize = null;
+
+            this.currentAdventureCard = null;
+        }
+
+        /** METHODS FOR STRUCTURED UPDATE OF FSM? **/
+
+    };
+
+
+
+
+    private FSM fsm;
+    private List<String> logs;
+
+    private PlayerColor myColor;
+    private List<PlayerColor> otherPlayersColor;
+
+    private Map<GameStateType, GameState> gameStateMap;
+
+
+
+
+    public ViewModel() {
+        FSM fsm = new FSM();
+        this.fsm = fsm;
+
+        this.logs = new ArrayList<>();
+        this.gameStateMap = new HashMap<>();
+    }
+
+    public initializeViewModel() {
+        gameStateMap.put(, null);
+        gameStateMap.put(,);
+    }
+
+    public void onJoinServer() {
+        fsm.clientState = ClientState.SERVER_LOBBY;
+    }
+
+    public void onJoinGame() {
+        fsm.clientState = ClientState.IN_GAME;
+    }
+
+    //da qua in poi, tutto il resto verrà pushato dal server
+
+
+
+
+    /** metodi per modifica fsm modificabili dal client, senza intervento del server */
+
+    public void visualizePlayer(PlayerColor playerToVisualize) {
+        fsm.playerToVisualize = playerToVisualize;
+    }
+
+
+    public void peekPlayer(PlayerColor playerToPeek) {
+        List<PlayerColor> otherPlayersColor = getOtherPlayersColor();
+        if(otherPlayersColor.contains(playerToPeek)) {
+            visualizePlayer(playerToPeek);
+        }
+    }
+
+    public void cancelPeekPlayer() {
+        visualizePlayer(getMyColor());
+    }
+
+    public void addLog(String log) {
+        logs.add(log);
+    }
+
+    public void updateViewModel (Map<GameStateType, GameState> gameStateDeltas) {
+        for(GameStateType type : gameStateDeltas.keySet()) {
+            dispatchDelta(type, gameStateDeltas.get(type));
+        }
+    }
+
+    public void dispatchDelta (GameStateType gameStateType, GameState gameState) {
+        switch(gameStateType) {
+            case(GameStateType.FSM_CURRENT_GAME_PROGRESSION) {
+                setGameProgression(gameState);
+            }
+            case(GameStateType.FSM_CURRENT_GAME_PHASE) {
+                setGamePhase(gameState);
+            }
+        }
+        if (gameStateType != GameStateType. &&
+            gameStateType != GameStateType. &&
+            gameStateType != GameStateType. &&)
+        {
+                gameStateMap.put(gameStateType, gameState);
+        }
+    }
+
+
+
+
+    /** **/
+
+    public void setGameProgression(GameProgression gameProgression) {
+        fsm.gameProgression = gameProgression;
+    };
+
+    public GameProgression getGameProgression() {
+        return fsm.gameProgression;
+    }
+
+    public void setGamePhase(GamePhase gamePhase) {
+        fsm.gamePhase = gamePhase;
+
+
+        // in base alla fase, forzo la visualizzazione della rocketship del player (il quale magari stava visualizzando la r.sh. di un altro player)
+        // oppure togliere qualsiasi rocketship dalla visualizzazione, in favore della plancia di volo (dalla quale sarà comunque possibile visualizzare una r.sh.)
+        // o della schermata dei risultati finali (dalla quale si può comunque controllare la r.sh. di altri player)
+
+        if(gamePhase == GamePhase.ASSEMBLY_PHASE ) {
+            visualizePlayer(myColor);
+        }
+        if(gamePhase == GamePhase.TAKEOFF_PHASE) {
+            visualizePlayer(myColor);
+        }
+        if(gamePhase == GamePhase.FLIGHT_PHASE) {
+            visualizePlayer(null);
+        }
+        if(gamePhase == GamePhase.END_FLIGHT_PHASE) {
+            visualizePlayer(null);
+        }
+    };
+
+    public GamePhase getGamePhase() {
+        return fsm.gamePhase;
+    }
+
+
+
+
+
+
+
+
+
+    /* vvv in dubbio su come implementare questa parte vvv */
+
+
+
+
+
+    private GameController controller;
+    private FlightBoardFacade flightBoard;
+    private Player player;
+    private RocketshipBoard board;
+
+
+    public ViewModel(GameController c, String username){
+        controller = c;
+        flightBoard = c.getGameSession().getFlightBoard();
+        player = c.getGameSession().getPlayers().stream().filter(p -> p.getUsername().equals(username)).findFirst().orElse(null);
+        board = player.getBoard();
+    }
+
+    public PlayerColor getMyColor() {
+        return myColor;
+    }
+
+    public List<PlayerColor> getOtherPlayersColor() {
+        return otherPlayersColor;
+    }
+
+
+
+
+
+    /**
+     * getBoard() returns an array which contain, for each position, information about the component in that place
+     */
+    public String[][] getBoard(){
+        try{
+            String[][] boardString = new String[5][7];
+
+            for(int i = 0; i < 5; i++){
+                for(int j = 0; j < 7; j++){
+                    boardString[i][j] = board.getComponentAt(i,j).toString();
+                }
+            }
+
+            return boardString;
+
+        } catch (Exception e) {
+            System.out.println("You're not supposed to see this");
+            return null;
+        }
+    }
+
+
+
+
+    /**
+     * getPlayersPosition() returns a string that contains information about each player and his position
+     */
+    public String getPlayersPosition(){
+        String result = "";
+
+        for(Player p: flightBoard.returnPlayersInOrder()){
+            String s = " in position " + Integer.toString(flightBoard.getAllPlayerProgression().get(p) % flightBoard.getSize());
+            result = result + "Player " + p.getUsername() + s + ", number of laps: " + Integer.toString(p.getLaps());
+        }
+
+        return result;
+    }
+
+
+    /**
+     * getCurrentCard() returns a string that contains information about the current card
+     */
+    public String getCurrentCard(){
+        return controller.getGameSession().getCurrentCard().toString();
+    }
+
+
+
+    /**
+     * getTurnedComponents() returns a string with a description of all the turned components on the table
+     */
+    public String getTurnedComponents(){
+        List<String> result = controller.getGameSession().showTurnedComponents().stream().map(c -> c.toString()).toList();
+
+        String r = "";
+
+        for(String s: result){
+            r = r + s + "\n";
+        }
+
+        return r;
+    }
+
+
+
+}

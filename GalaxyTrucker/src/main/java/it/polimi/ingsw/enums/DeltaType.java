@@ -1,0 +1,31 @@
+package it.polimi.ingsw.enums;
+
+public enum DeltaType {
+
+    COLOR_DELTA,
+
+    OTHER_COLOR_DELTA,
+
+    ROCKETSHIP_DELTA,
+    RESERVED_DELTA,
+    HAND_DELTA,
+    TURNED_DELTA,
+
+    FLIGHT_TYPE_DELTA,
+    FLIGHT_BOARD_DELTA,
+    ADVENTURE_DELTA,
+
+    VIEW_DELTA,
+
+    BACKUP_DELTA,
+
+    PHASE_DELTA,
+    PROGRESSION_DELTA,
+
+    CARD_DELTA,
+    PEEKABLE_CARDS_DELTA,
+    PEEK_A_STACK_DELTA,
+    STOP_PEEKING_DELTA,
+
+    RANKING_DELTA;
+}
